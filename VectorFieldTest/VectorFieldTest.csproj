@@ -55,6 +55,8 @@
     <Compile Include="PointCell.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StreamManager.cs" />
+    <Compile Include="VFStream.cs" />
     <Compile Include="vec2.cs" />
     <Compile Include="VectorField.cs" />
     <Compile Include="VFMath.cs" />
