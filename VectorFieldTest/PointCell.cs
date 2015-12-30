@@ -9,174 +9,73 @@ namespace VectorFieldTest
 {
     class PointCell
     {
-        private static readonly float SPREAD_RATE = 0.3f;
-        public static readonly double RANDOM_RATE = 10.0;
-        public PointCell(float nx, float ny, float dx, float dy, int n, int m)
+        private static readonly float SPREAD_RATE = 0.5f;
+        public static readonly double RANDOM_RATE = 5.0;
+        public PointCell(float x, float y)
         {
-            mPosition = new vec2(nx, ny);
+            mPosition = new vec2(x, y);
             mVelocity = new vec2();
-
-            if (m > 1)
-            {
-                mRelatedPoints[1] = new PointCell(this, null, dx, m - 1);
-            }
-            if (n > 1)
-            {
-                mRelatedPoints[0] = new PointCell(this, dx, dy, n - 1, m);
-            }
         }
-        public PointCell(PointCell parent, float dx, float dy, int n, int m)
+        public static int getOppositeDirection(int direction)
         {
-            mPosition = new vec2(parent.mPosition.x, parent.mPosition.y + dy);
-            mVelocity = new vec2();
-            mRelatedPoints[2] = parent;
-
-            if (m > 1)
+            int res = direction + 2;
+            if (res>3)
             {
-                mRelatedPoints[1] = new PointCell(this, parent.mRelatedPoints[1], dx, m - 1);
+                res -= 4;
             }
-            if (n > 1)
-            {
-                mRelatedPoints[0] = new PointCell(this, dx, dy, n - 1, m);
-            }
+            return res;
         }
-        public PointCell(PointCell parentX, PointCell parentY, float dx, int m)
+        public static int getXDirection(vec2 v)
         {
-            mPosition = new vec2(parentX.mPosition.x + dx, parentX.mPosition.y);
-            mVelocity = new vec2();
-            mRelatedPoints[2] = parentY;
-            if (parentY!=null)
-            {
-                parentY.mRelatedPoints[0] = this;
-            }
-            mRelatedPoints[3] = parentX;
-
-            if (m > 1)
-            {
-                if (parentY != null)
-                {
-                    mRelatedPoints[1] = new PointCell(this, parentY.mRelatedPoints[1], dx, m - 1);
-                }
-                else
-                {
-                    mRelatedPoints[1] = new PointCell(this, null, dx, m - 1);
-                }
-            }
+            if (v.x > 0)
+                return 1;
+            return 3;
         }
-        public PointCell get(int i, int j)
+        public static int getYDirection(vec2 v)
         {
-            if (i > 0)
+            if (v.y > 0)
+                return 0;
+            return 2;
+        }
+        public void setNeighbors(int direction, PointCell neighbor)
+        {
+            mRelatedPoints[direction] = neighbor;
+            int opposite = getOppositeDirection(direction);
+            if (neighbor.mRelatedPoints[opposite] == null)
             {
-                if (mRelatedPoints[0] != null)
-                {
-                    return mRelatedPoints[0].get(i - 1, j);
-                }
-                return null;
+                neighbor.setNeighbors(opposite, this);
             }
-            if (j > 0)
-            {
-                if (mRelatedPoints[1] != null)
-                {
-                    return mRelatedPoints[1].get(i, j - 1);
-                }
-                return null;
-            }
-            return this;
         }
         public void applyForce(vec2 force)
         {
             mVelocity = mVelocity + force;
         }
-        public int changeDirection(int direction)
+        public void applyRelax()
         {
-            if (direction == 0)
-            {
-                return 2;
-            }
-            return 0;
-        }
-        public void applyRelax(int direction)
-        {
+            mVelocity = mVelocity + vec2.getRand(RANDOM_RATE);
             mVelocity.damp();
-            vec2 newForce = mVelocity * SPREAD_RATE + vec2.getRand(RANDOM_RATE / 2.0);
+            vec2 newForce = mVelocity * SPREAD_RATE;
             if (!newForce.empty())
             {
                 newForce.randRotate();
                 mVelocity = mVelocity * (1.0f - SPREAD_RATE);
                 float xRate = Math.Abs(newForce.x) / (Math.Abs(newForce.x) + Math.Abs(newForce.y));
-                if (newForce.x > 0)
+                int xDir = getXDirection(newForce);
+                int yDir = getYDirection(newForce);
+                if (mRelatedPoints[xDir] != null)
                 {
-                    if (mRelatedPoints[1] != null)
-                    {
-                        mRelatedPoints[1].mVelocity = mRelatedPoints[1].mVelocity + newForce * xRate;
-                    }
+                    mRelatedPoints[xDir].mVelocity = mRelatedPoints[xDir].mVelocity + newForce * xRate;
                 }
-                else
+                if (mRelatedPoints[yDir] != null)
                 {
-                    if (mRelatedPoints[3] != null)
-                    {
-                        mRelatedPoints[3].mVelocity = mRelatedPoints[3].mVelocity + newForce * xRate;
-                    }
-                }
-
-                if (newForce.y > 0)
-                {
-                    if (mRelatedPoints[0] != null)
-                    {
-                        mRelatedPoints[0].mVelocity = mRelatedPoints[0].mVelocity + newForce * (1.0f - xRate);
-                    }
-                }
-                else
-                {
-                    if (mRelatedPoints[2] != null)
-                    {
-                        mRelatedPoints[2].mVelocity = mRelatedPoints[2].mVelocity + newForce * (1.0f - xRate);
-                    }
-                }
-            }
-            if (mRelatedPoints[direction] != null)
-            {
-                mRelatedPoints[direction].applyRelax(direction);
-            }
-            else
-            {
-                PointCell next = mRelatedPoints[1];
-                if (next != null)
-                {
-                    next.applyRelax(changeDirection(direction));
+                    mRelatedPoints[yDir].mVelocity = mRelatedPoints[yDir].mVelocity + newForce * (1.0f - xRate);
                 }
             }
         }
-        public void draw(Graphics g, int direction)
+        public void draw(Graphics g)
         {
             Color col = Color.Black;
-            for (int i = 0; i < 4; ++i )
-            {
-                if (mRelatedPoints[i] == null)
-                {
-                    if (col == Color.Yellow)
-                    {
-                        col = Color.Red;
-                    }
-                    else
-                    {
-                        col = Color.Yellow;
-                    }
-                }
-            }
             g.DrawLine(new Pen(col), mPosition.x, mPosition.y, mPosition.x + mVelocity.x, mPosition.y + mVelocity.y);
-            if (mRelatedPoints[direction] != null)
-            {
-                mRelatedPoints[direction].draw(g, direction);
-            }
-            else
-            {
-                PointCell next = mRelatedPoints[1];
-                if (next != null)
-                {
-                    next.draw(g, changeDirection(direction));
-                }
-            }
         }
         private vec2 mPosition;
         private vec2 mVelocity;
