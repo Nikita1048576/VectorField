@@ -52,12 +52,13 @@ namespace VectorFieldTest
         }
         public void applyRelax()
         {
-            mVelocity = mVelocity + vec2.getRand(RANDOM_RATE);
+            mVelocity = mVelocity + VFMath.getRandVec(RANDOM_RATE);
+            mVelocity.restrict();
             mVelocity.damp();
             vec2 newForce = mVelocity * SPREAD_RATE;
             if (!newForce.empty())
             {
-                newForce.randRotate();
+                VFMath.randRotate(newForce);
                 mVelocity = mVelocity * (1.0f - SPREAD_RATE);
                 float xRate = Math.Abs(newForce.x) / (Math.Abs(newForce.x) + Math.Abs(newForce.y));
                 int xDir = getXDirection(newForce);
