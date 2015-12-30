@@ -13,52 +13,68 @@ namespace VectorFieldTest
     public partial class Form1 : Form
     {
         DrawHandler dh;
-        PointCell cell;
+        VectorField field;
         public Form1()
         {
             InitializeComponent();
             dh = new DrawHandler(this);
-            cell = new PointCell(50, 50, 20, 20, 40, 40);
+            field = new VectorField(50, 50, 20, 20, 40, 40);
             timer1.Interval = 16;
             timer1.Start();
         }
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            cell.applyRelax(0);
+            field.applyRelax();
             Graphics graphics = dh.getGraphics();
-            cell.draw(graphics, 0);
+            field.draw(graphics);
             dh.Render();
         }
-
+        private void applyForce(vec2 force, int[] cellsX, int[] cellsY)
+        {
+            for (int i=0; i<cellsX.Length; ++i)
+            {
+                field.applyForce(cellsX[i], cellsY[i], force);
+            }
+        }
         private void Form1_KeyDown(object sender, KeyEventArgs e)
         {
             float strength = 200.0f;
             if (e.KeyCode == Keys.Right)
             {
-                PointCell newCell1 = cell.get(20, 0);
-                PointCell newCell2 = cell.get(21, 0);
-                PointCell newCell3 = cell.get(19, 0);
-                PointCell newCell4 = cell.get(22, 0);
-                PointCell newCell5 = cell.get(18, 0);
-                newCell1.applyForce(new vec2(strength, 0));
-                newCell2.applyForce(new vec2(strength, 0));
-                newCell3.applyForce(new vec2(strength, 0));
-                newCell4.applyForce(new vec2(strength, 0));
-                newCell5.applyForce(new vec2(strength, 0));
+                vec2 force = new vec2(strength, 0);
+                int[] cellsY = { 18, 19, 20, 21, 22 };
+                int[] cellsX = { 0, 0, 0, 0, 0 };
+                applyForce(force, cellsX, cellsY);
             }
-            if (e.KeyCode == Keys.Down)
+            else if (e.KeyCode == Keys.Enter)
             {
-                PointCell newCell1 = cell.get(0, 20);
-                PointCell newCell2 = cell.get(0, 21);
-                PointCell newCell3 = cell.get(0, 19);
-                PointCell newCell4 = cell.get(0, 22);
-                PointCell newCell5 = cell.get(0, 18);
-                newCell1.applyForce(new vec2(0, strength));
-                newCell2.applyForce(new vec2(0, strength));
-                newCell3.applyForce(new vec2(0, strength));
-                newCell4.applyForce(new vec2(0, strength));
-                newCell5.applyForce(new vec2(0, strength));
+                {
+                    vec2 force = new vec2(strength, 0);
+                    int[] cellsY = { 18, 19, 20, 21, 22 };
+                    int[] cellsX = { 0, 0, 0, 0, 0 };
+                    applyForce(force, cellsX, cellsY);
+                }
+                {
+                    vec2 force = new vec2(-strength, 0);
+                    int[] cellsY = { 18, 19, 20, 21, 22 };
+                    int[] cellsX = { 39, 39, 39, 39, 39 };
+                    applyForce(force, cellsX, cellsY);
+                }
+            }
+            else if (e.KeyCode == Keys.Left)
+            {
+                vec2 force = new vec2(-strength, 0);
+                int[] cellsY = { 18, 19, 20, 21, 22 };
+                int[] cellsX = { 39, 39, 39, 39, 39 };
+                applyForce(force, cellsX, cellsY);
+            }
+            else if (e.KeyCode == Keys.Down)
+            {
+                vec2 force = new vec2(0, strength);
+                int[] cellsX = { 18, 19, 20, 21, 22 };
+                int[] cellsY = { 0, 0, 0, 0, 0 };
+                applyForce(force, cellsX, cellsY);
             }
         }
     }
